@@ -119,11 +119,11 @@ class TrayPingApp:
         menu_items = [
             item(f"{active_name}: {ping_str}", lambda icon, item: None, enabled=False),
             item(f"Avg: {avg_str} | Jitter: {jitter_str} | Loss: {loss_str}", lambda icon, item: None, enabled=False),
-            item.SEPARATOR,
+            Menu.SEPARATOR,
             item("🎯 Game Presets", Menu(*self._get_server_items())),
             item("⏱ Polling Rate", Menu(*self._get_interval_items())),
             item("⚙ Open config.json", self.open_config_file),
-            item.SEPARATOR,
+            Menu.SEPARATOR,
             item("Exit", self.exit_app)
         ]
         return Menu(*menu_items)
