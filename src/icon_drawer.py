@@ -35,32 +35,33 @@ class IconDrawer:
             return (255, 112, 67, 255)   # Coral Orange
         return (255, 75, 75, 255)        # Red
 
-    def create_tray_icon(self, ping: float | None, loss: float = 0.0, show_number: bool = True) -> Image.Image:
-        # Render in 4x high-res (256x256) and downscale with Lanczos for ultra-crisp antialiasing
+    def create_tray_icon(self, ping: float | None, loss: float = 0.0, style: str = "badge") -> Image.Image:
+        # Render at 256x256 and downscale with Lanczos for ultra-crisp antialiasing
         canvas_size = 256
         img = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
 
         accent = self._get_color(ping, loss)
 
-        # Background rounded badge with dark sleek fill
-        pad = 8
-        draw.rounded_rectangle(
-            [(pad, pad), (canvas_size - pad, canvas_size - pad)],
-            radius=64,
-            fill=(16, 18, 24, 250),
-            outline=accent,
-            width=16
-        )
-
-        if not show_number:
-            dot_pad = 72
+        if style == "dot":
+            dot_pad = 48
             draw.ellipse(
                 [(dot_pad, dot_pad), (canvas_size - dot_pad, canvas_size - dot_pad)],
                 fill=accent
             )
             return img.resize((64, 64), Image.Resampling.LANCZOS)
 
+        if style == "badge":
+            pad = 8
+            draw.rounded_rectangle(
+                [(pad, pad), (canvas_size - pad, canvas_size - pad)],
+                radius=64,
+                fill=(16, 18, 24, 250),
+                outline=accent,
+                width=16
+            )
+
+        # Draw number / text
         if ping is None:
             text = "X"
         elif ping >= 999:
@@ -68,8 +69,7 @@ class IconDrawer:
         else:
             text = str(int(round(ping)))
 
-        # Dynamic high-res font size
-        font_size = 140 if len(text) <= 2 else (105 if len(text) == 3 else 80)
+        font_size = 145 if len(text) <= 2 else (110 if len(text) == 3 else 85)
         font = self._get_font(font_size)
 
         bbox = draw.textbbox((0, 0), text, font=font)
@@ -80,5 +80,4 @@ class IconDrawer:
 
         draw.text((x, y), text, font=font, fill=accent)
 
-        # Downscale to standard 64x64 tray icon
         return img.resize((64, 64), Image.Resampling.LANCZOS)

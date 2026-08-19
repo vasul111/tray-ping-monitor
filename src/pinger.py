@@ -4,9 +4,10 @@ import threading
 from collections import deque
 import ping3
 from src.roblox_detector import RobloxServerDetector
+from src.cs2_detector import CS2ServerDetector
 
 class PingStats:
-    def __init__(self, history_size: int = 30):
+    def __init__(self, history_size: int = 40):
         self.history_size = history_size
         self.lock = threading.Lock()
         self.history = deque(maxlen=history_size)
@@ -64,7 +65,7 @@ class PingStats:
 
 
 class BackgroundPinger:
-    def __init__(self, host: str, interval: float = 1.5, history_size: int = 30, on_update_callback=None):
+    def __init__(self, host: str, interval: float = 1.5, history_size: int = 40, on_update_callback=None):
         self.host = host
         self.interval = interval
         self.stats = PingStats(history_size=history_size)
@@ -72,6 +73,7 @@ class BackgroundPinger:
         self.running = False
         self._thread = None
         self.roblox_detector = RobloxServerDetector()
+        self.cs2_detector = CS2ServerDetector()
 
     def set_target(self, host: str):
         if self.host != host:
@@ -91,7 +93,13 @@ class BackgroundPinger:
             ip, status = self.roblox_detector.get_latest_server_ip()
             if ip:
                 return ip, 443, f"Live: {ip}"
-            return "ec2.eu-central-1.amazonaws.com", 443, "Roblox (Standby EU)"
+            return "ec2.eu-central-1.amazonaws.com", 443, "Standby (EU)"
+
+        if host == "auto:cs2":
+            ip, status = self.cs2_detector.get_latest_server_ip()
+            if ip:
+                return ip, 27015, f"Live: {ip}"
+            return "fra.valve.net", 443, "Standby (Frankfurt SDR)"
 
         if ":" in host and not host.startswith("auto:"):
             parts = host.split(":")
@@ -104,7 +112,6 @@ class BackgroundPinger:
         return host, port, host
 
     def _ping_target(self, host: str, port: int) -> float | None:
-        # 1. Try ICMP ping first
         try:
             val = ping3.ping(host, unit='ms', timeout=1.0)
             if val is not None and val is not False:
@@ -112,15 +119,13 @@ class BackgroundPinger:
         except Exception:
             pass
 
-        # 2. Fallback to TCP handshake latency (works on ICMP-blocked firewalls like Valorant/AWS)
         t0 = time.perf_counter()
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1.2)
             sock.connect((host, port))
             sock.close()
-            latency = (time.perf_counter() - t0) * 1000.0
-            return round(latency, 1)
+            return round((time.perf_counter() - t0) * 1000.0, 1)
         except Exception:
             return None
 

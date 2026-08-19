@@ -11,6 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.config import ConfigManager
 from src.pinger import BackgroundPinger
 from src.icon_drawer import IconDrawer
+from src.autostart import is_autostart_enabled, set_autostart
+from src.graph_window import MiniGraphWindow
 
 class TrayPingApp:
     def __init__(self):
@@ -27,7 +29,7 @@ class TrayPingApp:
         self.pinger = BackgroundPinger(
             host=active_server.get("host", "auto:roblox"),
             interval=self.config.get("interval_seconds", 1.5),
-            history_size=self.config.get("history_size", 30),
+            history_size=self.config.get("history_size", 40),
             on_update_callback=self.on_ping_update
         )
 
@@ -41,10 +43,10 @@ class TrayPingApp:
 
         ping = snap.get("current")
         loss = snap.get("loss", 0.0)
-        show_num = self.config.get("show_number_in_tray", True)
+        style = self.config_manager.data.get("icon_style", "badge")
         resolved = snap.get("resolved_ip", "")
         
-        img = self.drawer.create_tray_icon(ping, loss, show_number=show_num)
+        img = self.drawer.create_tray_icon(ping, loss, style=style)
         self.icon.icon = img
 
         active_name = self.config.get("active_server", "Target")
@@ -69,6 +71,27 @@ class TrayPingApp:
             self.pinger.set_interval(interval_sec)
             self.update_menu()
         return handler
+
+    def select_icon_style(self, style_name: str):
+        def handler(icon, item):
+            self.config_manager.set_icon_style(style_name)
+            if self.last_snap and self.icon:
+                img = self.drawer.create_tray_icon(
+                    self.last_snap.get("current"),
+                    self.last_snap.get("loss", 0.0),
+                    style=style_name
+                )
+                self.icon.icon = img
+            self.update_menu()
+        return handler
+
+    def toggle_autostart(self, icon, item):
+        curr = is_autostart_enabled()
+        set_autostart(not curr)
+        self.update_menu()
+
+    def open_graph(self, icon=None, item=None):
+        MiniGraphWindow.show_graph(self.pinger, self.config_manager)
 
     def open_config_file(self, icon, item):
         config_path = self.base_dir / "config.json"
@@ -116,6 +139,21 @@ class TrayPingApp:
             ))
         return items
 
+    def _get_style_items(self):
+        styles = [
+            ("Badge (Border + Number)", "badge"),
+            ("Minimal Dot", "dot"),
+            ("Number Only", "number_only")
+        ]
+        items = []
+        for label, style_key in styles:
+            items.append(item(
+                label,
+                self.select_icon_style(style_key),
+                checked=lambda item, k=style_key: self.config_manager.data.get("icon_style", "badge") == k
+            ))
+        return items
+
     def build_menu(self):
         snap = self.last_snap or {}
         ping = snap.get("current")
@@ -127,12 +165,15 @@ class TrayPingApp:
         active_name = self.config.get("active_server", "Target")
 
         menu_items = [
-            item(f"{active_name}: {ping_str}", lambda icon, item: None, enabled=False),
-            item(f"Avg: {avg_str} | Jitter: {jitter_str} | Loss: {loss_str}", lambda icon, item: None, enabled=False),
+            item(f"{active_name}: {ping_str}", self.open_graph, default=True),
+            item(f"Avg: {avg_str} | Jitter: {jitter_str} | Loss: {loss_str}", self.open_graph),
+            item("Open Live Graph", self.open_graph),
             Menu.SEPARATOR,
             *self._get_categorized_server_menus(),
             Menu.SEPARATOR,
+            item("Icon Style", Menu(*self._get_style_items())),
             item("Polling Rate", Menu(*self._get_interval_items())),
+            item("Start with Windows", self.toggle_autostart, checked=lambda item: is_autostart_enabled()),
             item("Settings (config.json)", self.open_config_file),
             Menu.SEPARATOR,
             item("Exit", self.exit_app)
@@ -145,7 +186,7 @@ class TrayPingApp:
 
     def run(self):
         self.pinger.start()
-        initial_img = self.drawer.create_tray_icon(None)
+        initial_img = self.drawer.create_tray_icon(None, style=self.config.get("icon_style", "badge"))
         
         self.icon = pystray.Icon(
             name="TrayPingMonitor",

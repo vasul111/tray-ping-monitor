@@ -4,8 +4,8 @@ from pathlib import Path
 DEFAULT_CONFIG = {
     "active_server": "Roblox [Live In-Game]",
     "interval_seconds": 1.5,
-    "history_size": 30,
-    "show_number_in_tray": True,
+    "history_size": 40,
+    "icon_style": "badge",
     "thresholds": {
         "good": 50,
         "moderate": 110,
@@ -48,37 +48,42 @@ DEFAULT_CONFIG = {
             "category": "Roblox"
         },
         {
-            "name": "CS2 / Steam [Stockholm]",
-            "host": "sto.valve.net",
+            "name": "CS2 [Live In-Game Match]",
+            "host": "auto:cs2",
             "category": "CS2 / Steam"
         },
         {
-            "name": "CS2 / Steam [Frankfurt]",
+            "name": "CS2 [Frankfurt SDR]",
             "host": "fra.valve.net",
             "category": "CS2 / Steam"
         },
         {
-            "name": "CS2 / Steam [Warsaw]",
+            "name": "CS2 [Stockholm SDR]",
+            "host": "sto.valve.net",
+            "category": "CS2 / Steam"
+        },
+        {
+            "name": "CS2 [Warsaw SDR]",
             "host": "waw.valve.net",
             "category": "CS2 / Steam"
         },
         {
-            "name": "CS2 / Steam [Vienna]",
+            "name": "CS2 [Vienna SDR]",
             "host": "vie.valve.net",
             "category": "CS2 / Steam"
         },
         {
-            "name": "CS2 / Steam [Helsinki]",
+            "name": "CS2 [Helsinki SDR]",
             "host": "hel.valve.net",
             "category": "CS2 / Steam"
         },
         {
-            "name": "CS2 / Steam [London]",
+            "name": "CS2 [London SDR]",
             "host": "lhr.valve.net",
             "category": "CS2 / Steam"
         },
         {
-            "name": "CS2 / Steam [US Virginia]",
+            "name": "CS2 [US Virginia SDR]",
             "host": "iad.valve.net",
             "category": "CS2 / Steam"
         },
@@ -167,4 +172,8 @@ class ConfigManager:
 
     def set_interval(self, interval: float):
         self.data["interval_seconds"] = interval
+        self.save_config()
+
+    def set_icon_style(self, style: str):
+        self.data["icon_style"] = style
         self.save_config()

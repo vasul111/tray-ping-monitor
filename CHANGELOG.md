@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] - 2026-08-19
+
+### Added
+- **Windows Autostart**: Added native Windows Run registry integration toggle (`[✓] Start with Windows`) in the tray menu.
+- **Mini Floating Graph Window**: Real-time 40-sample latency sparkline graph with live min/avg/max/jitter/loss metrics (accessible via Left-Click or "Open Live Graph").
+- **Icon Style Switcher**: Choose between 3 tray icon styles directly from menu:
+  - `Badge` (Dark pill + border + number)
+  - `Minimal Dot` (Compact colored status circle)
+  - `Number Only` (Clean borderless typography)
+- **CS2 / Steam Live Match Detector**: Automatic live match detection by tracking active UDP sockets for `cs2.exe` / `dota2.exe`.
+
+### Changed
+- Refactored pinger rolling window history size from 30 to 40 samples for smoother graph visualization.
+- Added `psutil` dependency for process-level network connection monitoring.
+
+---
+
 ## [1.0.1] - 2026-08-19
 
 ### Added
