@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 from pathlib import Path
+from collections import defaultdict
 import pystray
 from pystray import MenuItem as item, Menu
 
@@ -24,7 +25,7 @@ class TrayPingApp:
         
         active_server = self.config_manager.get_active_server_info()
         self.pinger = BackgroundPinger(
-            host=active_server.get("host", "roblox.com"),
+            host=active_server.get("host", "auto:roblox"),
             interval=self.config.get("interval_seconds", 1.5),
             history_size=self.config.get("history_size", 30),
             on_update_callback=self.on_ping_update
@@ -41,21 +42,24 @@ class TrayPingApp:
         ping = snap.get("current")
         loss = snap.get("loss", 0.0)
         show_num = self.config.get("show_number_in_tray", True)
+        resolved = snap.get("resolved_ip", "")
         
         img = self.drawer.create_tray_icon(ping, loss, show_number=show_num)
         self.icon.icon = img
 
         active_name = self.config.get("active_server", "Target")
+        label = f"{active_name} ({resolved})" if resolved and resolved not in active_name else active_name
+
         if ping is not None:
-            self.icon.title = f"⚡ {active_name}\nPing: {ping} ms | Loss: {loss}%\nAvg: {snap.get('avg', 0)} ms | Jitter: {snap.get('jitter', 0)} ms"
+            self.icon.title = f"⚡ {label}\nPing: {ping} ms | Loss: {loss}%\nAvg: {snap.get('avg', 0)} ms | Jitter: {snap.get('jitter', 0)} ms"
         else:
-            self.icon.title = f"⚠️ {active_name}\nStatus: Timeout | Loss: {loss}%"
+            self.icon.title = f"⚠️ {label}\nStatus: Timeout | Loss: {loss}%"
 
     def select_server(self, server_name: str):
         def handler(icon, item):
             self.config_manager.set_active_server(server_name)
             server_info = self.config_manager.get_active_server_info()
-            self.pinger.set_target(server_info.get("host", "roblox.com"))
+            self.pinger.set_target(server_info.get("host", "auto:roblox"))
             self.update_menu()
         return handler
 
@@ -78,17 +82,24 @@ class TrayPingApp:
         if self.icon:
             self.icon.stop()
 
-    def _get_server_items(self):
+    def _get_categorized_server_menus(self):
         active_server = self.config.get("active_server")
-        items = []
+        categories = defaultdict(list)
+
         for s in self.config.get("servers", []):
+            cat = s.get("category", "Other")
             name = s.get("name", "Unknown")
-            items.append(item(
+            categories[cat].append(item(
                 name,
                 self.select_server(name),
                 checked=lambda item, n=name: n == self.config_manager.data.get("active_server")
             ))
-        return items
+
+        category_menus = []
+        for cat_name, items_list in categories.items():
+            category_menus.append(item(cat_name, Menu(*items_list)))
+
+        return category_menus
 
     def _get_interval_items(self):
         intervals = [
@@ -120,7 +131,8 @@ class TrayPingApp:
             item(f"{active_name}: {ping_str}", lambda icon, item: None, enabled=False),
             item(f"Avg: {avg_str} | Jitter: {jitter_str} | Loss: {loss_str}", lambda icon, item: None, enabled=False),
             Menu.SEPARATOR,
-            item("🎯 Game Presets", Menu(*self._get_server_items())),
+            *self._get_categorized_server_menus(),
+            Menu.SEPARATOR,
             item("⏱ Polling Rate", Menu(*self._get_interval_items())),
             item("⚙ Open config.json", self.open_config_file),
             Menu.SEPARATOR,

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 DEFAULT_CONFIG = {
-    "active_server": "Roblox (Global Matchmaking)",
+    "active_server": "Roblox (⚡ Live In-Game Auto-Detect)",
     "interval_seconds": 1.5,
     "history_size": 30,
     "show_number_in_tray": True,
@@ -18,34 +18,124 @@ DEFAULT_CONFIG = {
     },
     "servers": [
         {
-            "name": "Roblox (Global Matchmaking)",
-            "host": "roblox.com",
-            "category": "Gaming"
+            "name": "Roblox (⚡ Live In-Game Auto-Detect)",
+            "host": "auto:roblox",
+            "category": "🎮 Roblox"
         },
         {
-            "name": "Discord (Gateway)",
-            "host": "discord.gg",
-            "category": "Voice / Chat"
+            "name": "Roblox (EU - Frankfurt Datacenter)",
+            "host": "ec2.eu-central-1.amazonaws.com",
+            "category": "🎮 Roblox"
         },
         {
-            "name": "Steam / Valve (EU)",
-            "host": "162.254.197.1",
-            "category": "Gaming"
+            "name": "Roblox (EU - London Datacenter)",
+            "host": "ec2.eu-west-2.amazonaws.com",
+            "category": "🎮 Roblox"
         },
         {
-            "name": "Valorant / Riot (EU Central)",
+            "name": "Roblox (US - Virginia Datacenter)",
+            "host": "ec2.us-east-1.amazonaws.com",
+            "category": "🎮 Roblox"
+        },
+        {
+            "name": "Roblox (US - Oregon Datacenter)",
+            "host": "ec2.us-west-2.amazonaws.com",
+            "category": "🎮 Roblox"
+        },
+        {
+            "name": "Roblox (Asia - Singapore Datacenter)",
+            "host": "ec2.ap-southeast-1.amazonaws.com",
+            "category": "🎮 Roblox"
+        },
+        {
+            "name": "CS2 (🇸🇪 Stockholm / EU North)",
+            "host": "sto.valve.net",
+            "category": "🎯 CS2 / Steam"
+        },
+        {
+            "name": "CS2 (🇩🇪 Frankfurt / EU West)",
+            "host": "fra.valve.net",
+            "category": "🎯 CS2 / Steam"
+        },
+        {
+            "name": "CS2 (🇵🇱 Warsaw / Poland)",
+            "host": "waw.valve.net",
+            "category": "🎯 CS2 / Steam"
+        },
+        {
+            "name": "CS2 (🇦🇹 Vienna / Austria)",
+            "host": "vie.valve.net",
+            "category": "🎯 CS2 / Steam"
+        },
+        {
+            "name": "CS2 (🇫🇮 Helsinki / Finland)",
+            "host": "hel.valve.net",
+            "category": "🎯 CS2 / Steam"
+        },
+        {
+            "name": "CS2 (🇬🇧 London / UK)",
+            "host": "lhr.valve.net",
+            "category": "🎯 CS2 / Steam"
+        },
+        {
+            "name": "CS2 (🇺🇸 Virginia / US East)",
+            "host": "iad.valve.net",
+            "category": "🎯 CS2 / Steam"
+        },
+        {
+            "name": "Valorant (🇩🇪 Frankfurt 1)",
             "host": "162.249.72.1",
-            "category": "Gaming"
+            "category": "🏹 Valorant / Riot"
+        },
+        {
+            "name": "Valorant (🇵🇱 Warsaw)",
+            "host": "162.249.79.1",
+            "category": "🏹 Valorant / Riot"
+        },
+        {
+            "name": "Valorant (🇸🇪 Stockholm)",
+            "host": "162.249.78.1",
+            "category": "🏹 Valorant / Riot"
+        },
+        {
+            "name": "Valorant (🇬🇧 London)",
+            "host": "162.249.74.1",
+            "category": "🏹 Valorant / Riot"
+        },
+        {
+            "name": "Valorant (🇫🇷 Paris)",
+            "host": "162.249.75.1",
+            "category": "🏹 Valorant / Riot"
+        },
+        {
+            "name": "Valorant (🇺🇸 Virginia / US East)",
+            "host": "192.207.0.1",
+            "category": "🏹 Valorant / Riot"
+        },
+        {
+            "name": "Discord Voice (🇳🇱 Rotterdam / EU)",
+            "host": "rotterdam.discord.gg",
+            "category": "🎙 Discord Voice"
+        },
+        {
+            "name": "Discord Voice (🇩🇪 Frankfurt / Central EU)",
+            "host": "frankfurt.discord.gg",
+            "category": "🎙 Discord Voice"
+        },
+        {
+            "name": "Discord Voice (🇺🇸 US East)",
+            "host": "us-east.discord.gg",
+            "category": "🎙 Discord Voice"
         },
         {
             "name": "Cloudflare DNS (1.1.1.1)",
             "host": "1.1.1.1",
-            "category": "DNS"
+            "category": "🌐 DNS / Web"
         },
         {
             "name": "Google DNS (8.8.8.8)",
             "host": "8.8.8.8",
-            "category": "DNS"
+            "category": "🌐 DNS / Web"
         }
     ]
 }
@@ -84,7 +174,7 @@ class ConfigManager:
             if s.get("name") == active_name:
                 return s
         servers = self.data.get("servers", [])
-        return servers[0] if servers else {"name": "Roblox", "host": "roblox.com"}
+        return servers[0] if servers else {"name": "Roblox", "host": "auto:roblox"}
 
     def set_active_server(self, server_name: str):
         self.data["active_server"] = server_name

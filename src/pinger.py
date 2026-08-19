@@ -2,6 +2,7 @@ import time
 import threading
 from collections import deque
 import ping3
+from src.roblox_detector import RobloxServerDetector
 
 class PingStats:
     def __init__(self, history_size: int = 30):
@@ -15,12 +16,14 @@ class PingStats:
         self.jitter = 0.0
         self.loss_pct = 0.0
         self.last_update = 0.0
+        self.resolved_ip = ""
 
-    def record(self, ping_ms: float | None):
+    def record(self, ping_ms: float | None, resolved_ip: str = ""):
         with self.lock:
             self.current_ping = ping_ms
             self.history.append(ping_ms)
             self.last_update = time.time()
+            self.resolved_ip = resolved_ip
 
             valid = [p for p in self.history if p is not None]
             total = len(self.history)
@@ -53,6 +56,7 @@ class PingStats:
                 "max": self.max_ping,
                 "jitter": self.jitter,
                 "loss": self.loss_pct,
+                "resolved_ip": self.resolved_ip,
                 "last_update": self.last_update,
                 "samples_count": len(self.history)
             }
@@ -66,6 +70,7 @@ class BackgroundPinger:
         self.on_update_callback = on_update_callback
         self.running = False
         self._thread = None
+        self.roblox_detector = RobloxServerDetector()
 
     def set_target(self, host: str):
         if self.host != host:
@@ -77,18 +82,29 @@ class BackgroundPinger:
     def set_interval(self, interval: float):
         self.interval = max(0.3, float(interval))
 
+    def _resolve_target_host(self) -> tuple[str, str]:
+        if self.host == "auto:roblox":
+            ip, status = self.roblox_detector.get_latest_server_ip()
+            if ip:
+                return ip, f"Roblox ({ip})"
+            # Fallback to Frankfurt AWS if not currently in-game
+            return "ec2.eu-central-1.amazonaws.com", "Roblox (Standby - EU)"
+        return self.host, self.host
+
     def _worker(self):
         while self.running:
             t0 = time.time()
+            target_ip, target_label = self._resolve_target_host()
+
             res = None
             try:
-                val = ping3.ping(self.host, unit='ms', timeout=1.2)
+                val = ping3.ping(target_ip, unit='ms', timeout=1.2)
                 if val is not None and val is not False:
                     res = round(float(val), 1)
             except Exception:
                 res = None
 
-            self.stats.record(res)
+            self.stats.record(res, resolved_ip=target_label)
 
             if self.on_update_callback:
                 try:
