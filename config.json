@@ -1,0 +1,48 @@
+{
+    "active_server": "Cloudflare DNS (1.1.1.1)",
+    "interval_seconds": 1.5,
+    "history_size": 30,
+    "show_number_in_tray": true,
+    "thresholds": {
+        "good": 50,
+        "moderate": 110,
+        "bad": 180
+    },
+    "alerts": {
+        "enabled": true,
+        "loss_threshold_pct": 15,
+        "high_ping_threshold_ms": 200
+    },
+    "servers": [
+        {
+            "name": "Cloudflare DNS (1.1.1.1)",
+            "host": "1.1.1.1",
+            "category": "DNS / Web"
+        },
+        {
+            "name": "Google DNS (8.8.8.8)",
+            "host": "8.8.8.8",
+            "category": "DNS / Web"
+        },
+        {
+            "name": "Roblox (Global Matchmaking)",
+            "host": "roblox.com",
+            "category": "Gaming"
+        },
+        {
+            "name": "Discord (Gateway)",
+            "host": "discord.gg",
+            "category": "Voice / Chat"
+        },
+        {
+            "name": "Steam / Valve (EU Server)",
+            "host": "162.254.197.1",
+            "category": "Gaming"
+        },
+        {
+            "name": "Valorant / Riot (EU Central)",
+            "host": "162.249.72.1",
+            "category": "Gaming"
+        }
+    ]
+}
