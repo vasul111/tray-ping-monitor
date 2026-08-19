@@ -1,102 +1,85 @@
-from PIL import Image, ImageDraw, ImageFont
 import os
+from PIL import Image, ImageDraw, ImageFont
 
 class IconDrawer:
     def __init__(self, thresholds: dict = None):
         self.thresholds = thresholds or {"good": 50, "moderate": 110, "bad": 180}
-        self.font = self._load_best_font()
+        self.font = self._find_font()
 
-    def _load_best_font(self):
-        # Search for standard crisp Windows fonts
-        font_candidates = [
-            r"C:\Windows\Fonts\segoeuib.ttf",  # Segoe UI Bold
+    def _find_font(self):
+        candidates = [
+            r"C:\Windows\Fonts\segoeuib.ttf",
+            r"C:\Windows\Fonts\arialbd.ttf",
             r"C:\Windows\Fonts\segoeui.ttf",
-            r"C:\Windows\Fonts\arialbd.ttf",   # Arial Bold
-            r"C:\Windows\Fonts\arial.ttf",
-            r"C:\Windows\Fonts\calibrib.ttf",
+            r"C:\Windows\Fonts\arial.ttf"
         ]
-        for fpath in font_candidates:
-            if os.path.exists(fpath):
+        for path in candidates:
+            if os.path.exists(path):
                 try:
-                    return ImageFont.truetype(fpath, size=34)
+                    return ImageFont.truetype(path, size=32)
                 except Exception:
                     pass
         return ImageFont.load_default()
 
-    def _get_status_color(self, ping: float | None, loss: float = 0.0):
-        if ping is None or loss >= 20.0:
-            # Disconnected / Timeout / High Loss
-            return (239, 68, 68, 255), (185, 28, 28, 255)  # Bright Red / Dark Red
-        
+    def _get_colors(self, ping: float | None, loss: float = 0.0):
+        if ping is None or loss >= 15.0:
+            return (239, 68, 68, 255)  # Red (timeout/drop)
+
         good = self.thresholds.get("good", 50)
         mod = self.thresholds.get("moderate", 110)
         bad = self.thresholds.get("bad", 180)
 
         if ping < good:
-            return (16, 185, 129, 255), (5, 150, 105, 255)   # Emerald Green
+            return (16, 185, 129, 255)  # Green
         elif ping < mod:
-            return (245, 158, 11, 255), (217, 119, 6, 255)   # Amber Yellow
+            return (245, 158, 11, 255)  # Amber
         elif ping < bad:
-            return (249, 115, 22, 255), (234, 88, 12, 255)   # Orange
-        else:
-            return (239, 68, 68, 255), (185, 28, 28, 255)   # Red
+            return (249, 115, 22, 255)  # Orange
+        return (239, 68, 68, 255)       # Red
 
     def create_tray_icon(self, ping: float | None, loss: float = 0.0, show_number: bool = True) -> Image.Image:
         size = 64
         image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
         draw = ImageDraw.Draw(image)
 
-        primary_color, secondary_color = self._get_status_color(ping, loss)
+        accent = self._get_colors(ping, loss)
 
-        # Draw outer rounded background pill / badge
-        margin = 3
+        # Background rounded badge
+        pad = 2
         draw.rounded_rectangle(
-            [(margin, margin), (size - margin, size - margin)],
-            radius=18,
-            fill=(18, 20, 26, 240),      # Dark modern background
-            outline=primary_color,        # Accent color border
+            [(pad, pad), (size - pad, size - pad)],
+            radius=16,
+            fill=(15, 17, 23, 245),
+            outline=accent,
             width=4
         )
 
         if not show_number:
-            # Draw solid circular indicator
-            dot_margin = 16
-            draw.ellipse(
-                [(dot_margin, dot_margin), (size - dot_margin, size - dot_margin)],
-                fill=primary_color
-            )
+            draw.ellipse([(18, 18), (46, 46)], fill=accent)
             return image
 
-        # Determine text to render
         if ping is None:
             text = "✕"
-            text_color = (239, 68, 68, 255)
         elif ping >= 999:
             text = "999"
-            text_color = primary_color
         else:
             text = str(int(round(ping)))
-            text_color = primary_color
 
-        # Dynamic font sizing based on string length
-        font_size = 34 if len(text) <= 2 else (26 if len(text) == 3 else 20)
+        font_size = 32 if len(text) <= 2 else (24 if len(text) == 3 else 18)
         try:
-            # Try to get dynamically sized font if possible
-            for fpath in [r"C:\Windows\Fonts\segoeuib.ttf", r"C:\Windows\Fonts\arialbd.ttf"]:
-                if os.path.exists(fpath):
-                    font = ImageFont.truetype(fpath, size=font_size)
+            for path in [r"C:\Windows\Fonts\segoeuib.ttf", r"C:\Windows\Fonts\arialbd.ttf"]:
+                if os.path.exists(path):
+                    font = ImageFont.truetype(path, size=font_size)
                     break
             else:
                 font = self.font
         except Exception:
             font = self.font
 
-        # Center text
         bbox = draw.textbbox((0, 0), text, font=font)
-        text_w = bbox[2] - bbox[0]
-        text_h = bbox[3] - bbox[1]
-        x = (size - text_w) / 2
-        y = (size - text_h) / 2 - 4
+        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        x = (size - tw) / 2
+        y = (size - th) / 2 - 3
 
-        draw.text((x, y), text, font=font, fill=text_color)
+        draw.text((x, y), text, font=font, fill=accent)
         return image

@@ -5,7 +5,6 @@ from pathlib import Path
 import pystray
 from pystray import MenuItem as item, Menu
 
-# Ensure src path is in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.config import ConfigManager
@@ -14,7 +13,6 @@ from src.icon_drawer import IconDrawer
 
 class TrayPingApp:
     def __init__(self):
-        # Resolve base directory (handles both python script and compiled .exe)
         if getattr(sys, 'frozen', False):
             self.base_dir = Path(sys.executable).parent
         else:
@@ -22,12 +20,11 @@ class TrayPingApp:
 
         self.config_manager = ConfigManager(str(self.base_dir / "config.json"))
         self.config = self.config_manager.data
-        
         self.drawer = IconDrawer(self.config.get("thresholds"))
         
         active_server = self.config_manager.get_active_server_info()
         self.pinger = BackgroundPinger(
-            host=active_server.get("host", "1.1.1.1"),
+            host=active_server.get("host", "roblox.com"),
             interval=self.config.get("interval_seconds", 1.5),
             history_size=self.config.get("history_size", 30),
             on_update_callback=self.on_ping_update
@@ -45,22 +42,20 @@ class TrayPingApp:
         loss = snap.get("loss", 0.0)
         show_num = self.config.get("show_number_in_tray", True)
         
-        # Generate new icon image
         img = self.drawer.create_tray_icon(ping, loss, show_number=show_num)
         self.icon.icon = img
 
-        # Update hover tooltip
         active_name = self.config.get("active_server", "Target")
         if ping is not None:
             self.icon.title = f"⚡ {active_name}\nPing: {ping} ms | Loss: {loss}%\nAvg: {snap.get('avg', 0)} ms | Jitter: {snap.get('jitter', 0)} ms"
         else:
-            self.icon.title = f"⚠️ {active_name}\nStatus: Request Timeout / Loss: {loss}%"
+            self.icon.title = f"⚠️ {active_name}\nStatus: Timeout | Loss: {loss}%"
 
     def select_server(self, server_name: str):
         def handler(icon, item):
             self.config_manager.set_active_server(server_name)
             server_info = self.config_manager.get_active_server_info()
-            self.pinger.set_target(server_info.get("host", "1.1.1.1"))
+            self.pinger.set_target(server_info.get("host", "roblox.com"))
             self.update_menu()
         return handler
 
@@ -88,7 +83,6 @@ class TrayPingApp:
         items = []
         for s in self.config.get("servers", []):
             name = s.get("name", "Unknown")
-            is_active = (name == active_server)
             items.append(item(
                 name,
                 self.select_server(name),
@@ -98,11 +92,10 @@ class TrayPingApp:
 
     def _get_interval_items(self):
         intervals = [
-            ("⚡ 0.5 sec (Fast)", 0.5),
-            ("⏱ 1.0 sec (Standard)", 1.0),
-            ("⏱ 1.5 sec (Recommended)", 1.5),
-            ("⏱ 3.0 sec (Low Bandwidth)", 3.0),
-            ("⏱ 5.0 sec (Eco)", 5.0)
+            ("⚡ 0.5s (Fast)", 0.5),
+            ("⏱ 1.0s (Smooth)", 1.0),
+            ("⏱ 1.5s (Default)", 1.5),
+            ("⏱ 3.0s (Eco)", 3.0)
         ]
         items = []
         for label, val in intervals:
@@ -124,14 +117,14 @@ class TrayPingApp:
         active_name = self.config.get("active_server", "Target")
 
         menu_items = [
-            item(f"⚡ {active_name}: {ping_str}", lambda icon, item: None, enabled=False),
-            item(f"📊 Avg: {avg_str} | Jitter: {jitter_str} | Loss: {loss_str}", lambda icon, item: None, enabled=False),
+            item(f"{active_name}: {ping_str}", lambda icon, item: None, enabled=False),
+            item(f"Avg: {avg_str} | Jitter: {jitter_str} | Loss: {loss_str}", lambda icon, item: None, enabled=False),
             item.SEPARATOR,
-            item("🎮 Switch Target / Game", Menu(*self._get_server_items())),
-            item("⏱ Refresh Rate", Menu(*self._get_interval_items())),
-            item("⚙ Open Settings (config.json)", self.open_config_file),
+            item("🎯 Game Presets", Menu(*self._get_server_items())),
+            item("⏱ Polling Rate", Menu(*self._get_interval_items())),
+            item("⚙ Open config.json", self.open_config_file),
             item.SEPARATOR,
-            item("❌ Exit", self.exit_app)
+            item("Exit", self.exit_app)
         ]
         return Menu(*menu_items)
 
@@ -146,16 +139,11 @@ class TrayPingApp:
         self.icon = pystray.Icon(
             name="TrayPingMonitor",
             icon=initial_img,
-            title="Tray Ping Monitor (Starting...)",
+            title="Tray Ping Monitor",
             menu=self.build_menu()
         )
-
-        # Run icon loop (blocking)
         self.icon.run()
 
-def main():
+if __name__ == "__main__":
     app = TrayPingApp()
     app.run()
-
-if __name__ == "__main__":
-    main()
