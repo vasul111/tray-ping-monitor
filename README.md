@@ -4,6 +4,12 @@ Lightweight Windows system tray application that monitors live ping, jitter, and
 
 ---
 
+### screenshot
+
+<img width="330" height="279" alt="image" src="https://github.com/user-attachments/assets/2ec053a8-1f1c-4959-a958-7aee45d71f12" />
+<img width="458" height="303" alt="image" src="https://github.com/user-attachments/assets/6e61b4c0-64b5-4890-b659-5c94c2e74a5a" />
+
+
 ### Key Capabilities
 
 - **Roblox**:
