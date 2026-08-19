@@ -1,4 +1,5 @@
 import time
+import socket
 import threading
 from collections import deque
 import ping3
@@ -82,28 +83,53 @@ class BackgroundPinger:
     def set_interval(self, interval: float):
         self.interval = max(0.3, float(interval))
 
-    def _resolve_target_host(self) -> tuple[str, str]:
-        if self.host == "auto:roblox":
+    def _resolve_target_host(self) -> tuple[str, int, str]:
+        host = self.host
+        port = 443
+
+        if host == "auto:roblox":
             ip, status = self.roblox_detector.get_latest_server_ip()
             if ip:
-                return ip, f"Roblox ({ip})"
-            # Fallback to Frankfurt AWS if not currently in-game
-            return "ec2.eu-central-1.amazonaws.com", "Roblox (Standby - EU)"
-        return self.host, self.host
+                return ip, 443, f"Live: {ip}"
+            return "ec2.eu-central-1.amazonaws.com", 443, "Roblox (Standby EU)"
+
+        if ":" in host and not host.startswith("auto:"):
+            parts = host.split(":")
+            host = parts[0]
+            try:
+                port = int(parts[1])
+            except ValueError:
+                port = 443
+
+        return host, port, host
+
+    def _ping_target(self, host: str, port: int) -> float | None:
+        # 1. Try ICMP ping first
+        try:
+            val = ping3.ping(host, unit='ms', timeout=1.0)
+            if val is not None and val is not False:
+                return round(float(val), 1)
+        except Exception:
+            pass
+
+        # 2. Fallback to TCP handshake latency (works on ICMP-blocked firewalls like Valorant/AWS)
+        t0 = time.perf_counter()
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1.2)
+            sock.connect((host, port))
+            sock.close()
+            latency = (time.perf_counter() - t0) * 1000.0
+            return round(latency, 1)
+        except Exception:
+            return None
 
     def _worker(self):
         while self.running:
             t0 = time.time()
-            target_ip, target_label = self._resolve_target_host()
+            target_host, target_port, target_label = self._resolve_target_host()
 
-            res = None
-            try:
-                val = ping3.ping(target_ip, unit='ms', timeout=1.2)
-                if val is not None and val is not False:
-                    res = round(float(val), 1)
-            except Exception:
-                res = None
-
+            res = self._ping_target(target_host, target_port)
             self.stats.record(res, resolved_ip=target_label)
 
             if self.on_update_callback:

@@ -48,12 +48,12 @@ class TrayPingApp:
         self.icon.icon = img
 
         active_name = self.config.get("active_server", "Target")
-        label = f"{active_name} ({resolved})" if resolved and resolved not in active_name else active_name
+        label = f"{active_name} [{resolved}]" if resolved and resolved not in active_name else active_name
 
         if ping is not None:
-            self.icon.title = f"⚡ {label}\nPing: {ping} ms | Loss: {loss}%\nAvg: {snap.get('avg', 0)} ms | Jitter: {snap.get('jitter', 0)} ms"
+            self.icon.title = f"{label}\nPing: {ping} ms | Loss: {loss}%\nAvg: {snap.get('avg', 0)} ms | Jitter: {snap.get('jitter', 0)} ms"
         else:
-            self.icon.title = f"⚠️ {label}\nStatus: Timeout | Loss: {loss}%"
+            self.icon.title = f"{label}\nStatus: Timeout | Loss: {loss}%"
 
     def select_server(self, server_name: str):
         def handler(icon, item):
@@ -83,7 +83,6 @@ class TrayPingApp:
             self.icon.stop()
 
     def _get_categorized_server_menus(self):
-        active_server = self.config.get("active_server")
         categories = defaultdict(list)
 
         for s in self.config.get("servers", []):
@@ -103,10 +102,10 @@ class TrayPingApp:
 
     def _get_interval_items(self):
         intervals = [
-            ("⚡ 0.5s (Fast)", 0.5),
-            ("⏱ 1.0s (Smooth)", 1.0),
-            ("⏱ 1.5s (Default)", 1.5),
-            ("⏱ 3.0s (Eco)", 3.0)
+            ("0.5s (Fast)", 0.5),
+            ("1.0s (Smooth)", 1.0),
+            ("1.5s (Default)", 1.5),
+            ("3.0s (Eco)", 3.0)
         ]
         items = []
         for label, val in intervals:
@@ -133,8 +132,8 @@ class TrayPingApp:
             Menu.SEPARATOR,
             *self._get_categorized_server_menus(),
             Menu.SEPARATOR,
-            item("⏱ Polling Rate", Menu(*self._get_interval_items())),
-            item("⚙ Open config.json", self.open_config_file),
+            item("Polling Rate", Menu(*self._get_interval_items())),
+            item("Settings (config.json)", self.open_config_file),
             Menu.SEPARATOR,
             item("Exit", self.exit_app)
         ]
