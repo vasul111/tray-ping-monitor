@@ -12,7 +12,6 @@ from src.config import ConfigManager
 from src.pinger import BackgroundPinger
 from src.icon_drawer import IconDrawer
 from src.autostart import is_autostart_enabled, set_autostart
-from src.graph_window import MiniGraphWindow
 
 class TrayPingApp:
     def __init__(self):
@@ -90,9 +89,6 @@ class TrayPingApp:
         set_autostart(not curr)
         self.update_menu()
 
-    def open_graph(self, icon=None, item=None):
-        MiniGraphWindow.show_graph(self.pinger, self.config_manager)
-
     def open_config_file(self, icon, item):
         config_path = self.base_dir / "config.json"
         if sys.platform == "win32":
@@ -165,9 +161,8 @@ class TrayPingApp:
         active_name = self.config.get("active_server", "Target")
 
         menu_items = [
-            item(f"{active_name}: {ping_str}", self.open_graph, default=True),
-            item(f"Avg: {avg_str} | Jitter: {jitter_str} | Loss: {loss_str}", self.open_graph),
-            item("Open Live Graph", self.open_graph),
+            item(f"{active_name}: {ping_str}", lambda icon, item: None, enabled=False),
+            item(f"Avg: {avg_str} | Jitter: {jitter_str} | Loss: {loss_str}", lambda icon, item: None, enabled=False),
             Menu.SEPARATOR,
             *self._get_categorized_server_menus(),
             Menu.SEPARATOR,

@@ -7,20 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.3] - 2026-08-19
+
+### Removed
+- Removed experimental popup graph window to maintain 100% lightweight stability and zero UI dependencies.
+
+### Improved
+- Streamlined right-click tray context menu with direct stats overview.
+- Optimized memory and CPU consumption to under 15 MB RAM.
+- Refined `README.md` documentation and setup instructions.
+
+---
+
 ## [1.0.2] - 2026-08-19
 
 ### Added
-- **Windows Autostart**: Added native Windows Run registry integration toggle (`[✓] Start with Windows`) in the tray menu.
-- **Mini Floating Graph Window**: Real-time 40-sample latency sparkline graph with live min/avg/max/jitter/loss metrics (accessible via Left-Click or "Open Live Graph").
-- **Icon Style Switcher**: Choose between 3 tray icon styles directly from menu:
-  - `Badge` (Dark pill + border + number)
-  - `Minimal Dot` (Compact colored status circle)
-  - `Number Only` (Clean borderless typography)
+- **Windows Autostart**: Added native Windows Run registry integration toggle (`Start with Windows`) in the tray menu.
+- **Icon Style Switcher**: Choose between `Badge`, `Minimal Dot`, and `Number Only` styles directly from the menu.
 - **CS2 / Steam Live Match Detector**: Automatic live match detection by tracking active UDP sockets for `cs2.exe` / `dota2.exe`.
-
-### Changed
-- Refactored pinger rolling window history size from 30 to 40 samples for smoother graph visualization.
-- Added `psutil` dependency for process-level network connection monitoring.
 
 ---
 
@@ -35,10 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed `AttributeError: type object 'MenuItem' has no attribute 'SEPARATOR'` crash in `pystray` menu builder.
 - Fixed Valorant / Riot Games connection timeouts by routing through high-availability API endpoints.
-
-### Changed
-- **Visual Overhaul**: Redesigned tray icon badge using 4x supersampling (256x256 rendered with Lanczos downscaling) for ultra-sharp anti-aliased text and borders.
-- **Clean UI**: Removed all emoji spam across the application menus, tooltip strings, and configuration files.
 
 ---
 

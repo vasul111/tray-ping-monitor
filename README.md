@@ -1,53 +1,56 @@
 # tray-ping-monitor
 
-Lightweight Windows system tray application that monitors live ping, jitter, and packet loss to game datacenters and DNS endpoints.
+A lightweight Windows system tray utility that displays real-time latency, jitter, and packet loss to gaming datacenters and DNS servers directly in your taskbar.
 
 ---
 
-### screenshot
+### Why?
+Most network utilities ping generic web domains behind CDNs (`google.com`, `roblox.com`), which gives misleading latency numbers and does not reflect your actual in-game connection.
 
-<img width="330" height="279" alt="image" src="https://github.com/user-attachments/assets/2ec053a8-1f1c-4959-a958-7aee45d71f12" />
-<img width="458" height="303" alt="image" src="https://github.com/user-attachments/assets/6e61b4c0-64b5-4890-b659-5c94c2e74a5a" />
-
-
-### Key Capabilities
-
-- **Roblox**:
-  - Live In-Game Auto-Detect (reads active server IP directly from client logs)
-  - Regional datacenters: EU Frankfurt, EU London, US Virginia, US Oregon, Asia Singapore
-- **CS2 / Steam**:
-  - Valve SDR Relays: Stockholm, Frankfurt, Warsaw, Vienna, Helsinki, London, Virginia
-- **Valorant / Riot Games**:
-  - Low-latency endpoints: Frankfurt, Warsaw, Global
-- **Discord Voice**:
-  - Regional servers: Rotterdam, Frankfurt, Gateway
-- **DNS / Internet Baseline**:
-  - Cloudflare (1.1.1.1) and Google (8.8.8.8)
+This tool monitors real gaming relays and datacenters (Valve SDR for CS2, Riot European shards for Valorant, AWS datacenters for Roblox, Discord voice regions) with automatic in-game server detection.
 
 ---
 
-### Tray Features
+### Features
 
-- **Anti-aliased Tray Badge**: Displays real-time latency with clean color status:
+- **Live Taskbar Badge**: Real-time latency number with color status:
   - Green (< 50 ms)
   - Amber (50 - 110 ms)
   - Orange (110 - 180 ms)
   - Red (> 180 ms or packet loss)
-- **Categorized Menu**: Clean right-click context menu grouped by game and service.
-- **Metrics on Hover**: Current ping, rolling average, jitter (stability), and packet loss percentage.
-- **Dual-Mode Latency Engine**: Automatic ICMP echo with seamless TCP socket fallback for firewalled game servers (e.g. Riot/Valorant).
+- **3 Icon Styles**:
+  - `Badge` (Dark pill border with number)
+  - `Minimal Dot` (Compact color indicator circle)
+  - `Number Only` (Clean borderless typography)
+- **Game Server Auto-Detection**:
+  - **Roblox**: Real-time sniffer for `%localappdata%\Roblox\logs` that extracts your active game server IP (`128.116.x.x`) upon joining any place.
+  - **CS2 / Steam**: Process-level socket tracker that monitors active Valve SDR relays while playing Counter-Strike 2.
+- **Dual-Mode Latency Engine**: Seamlessly combines ICMP echo and instant TCP socket handshakes (port 443) for firewalled game networks (e.g. Valorant / Riot).
+- **Hover & Menu Statistics**: Hover over the tray icon or open the right-click menu to see current ping, rolling average, jitter (stability), and packet loss percentage.
+- **Windows Autostart**: Built-in toggle to run automatically on system boot.
+- **Zero Overhead**: Consumes < 15 MB RAM and near-zero CPU.
+
+---
+
+### Supported Presets
+
+- **Roblox**: Live In-Game Auto-Detect, EU Frankfurt, EU London, US Virginia, US Oregon, Asia Singapore
+- **CS2 / Steam**: Live Match Auto-Detect, Frankfurt SDR, Stockholm SDR, Warsaw SDR, Vienna SDR, Helsinki SDR, London SDR, US Virginia SDR
+- **Valorant / Riot Games**: EU Frankfurt, EU Warsaw, Global Gateway
+- **Discord**: Voice Rotterdam, Voice Frankfurt, Gateway
+- **DNS**: Cloudflare (`1.1.1.1`), Google (`8.8.8.8`)
 
 ---
 
 ### Quick Start
 
-#### Option 1: Standalone .exe (No Python Required)
+#### Download Standalone .exe (No Python Needed)
 1. Download `TrayPingMonitor.exe` from [Releases](https://github.com/vasul111/tray-ping-monitor/releases).
 2. Run `TrayPingMonitor.exe`.
 
-> Note: If Windows SmartScreen shows a warning on first launch, click **More info** -> **Run anyway**. This is standard for newly published unsigned open-source binaries.
+> Note: If Windows SmartScreen shows a prompt on first launch, click **More info** -> **Run anyway**.
 
-#### Option 2: Run from Source
+#### Run from Source
 ```bash
 git clone https://github.com/vasul111/tray-ping-monitor.git
 cd tray-ping-monitor
@@ -57,16 +60,16 @@ python src/main.py
 
 ---
 
-### Custom Configuration
+### Custom Servers
 
-Edit `config.json` to add custom endpoints:
+Add custom endpoints directly in `config.json`:
 
 ```json
 {
   "servers": [
     {
-      "name": "Custom Server",
-      "host": "1.2.3.4:443",
+      "name": "My Custom Server",
+      "host": "128.0.0.1:443",
       "category": "Custom"
     }
   ]
@@ -75,7 +78,7 @@ Edit `config.json` to add custom endpoints:
 
 ---
 
-### Building Executable
+### Building .exe
 
 ```bash
 python build_exe.py
